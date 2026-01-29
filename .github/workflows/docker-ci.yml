@@ -1,0 +1,48 @@
+name: Docker CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t friendly-octo-engine .
+        working-directory: ./friendly-octo-engine
+
+      - name: Run Docker container
+        run: |
+          docker run -d --name test_container -p 8080:8080 friendly-octo-engine
+        working-directory: ./friendly-octo-engine
+
+      - name: Wait for app to start
+        run: sleep 5
+
+      - name: Test app availability
+        run: |
+          curl --fail http://localhost:8080 || (docker logs test_container && exit 1)
+
+      - name: Dockerfile lint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./friendly-octo-engine/Dockerfile
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f test_container || true
+          docker rmi friendly-octo-engine || true
+        working-directory: ./friendly-octo-engine
