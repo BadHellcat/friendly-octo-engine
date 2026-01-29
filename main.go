@@ -88,6 +88,19 @@ func (s ParcelService) NextStatus(number int) error {
 	return s.store.SetStatus(number, nextStatus)
 }
 
+func initDB(db *sql.DB) error {
+	schema := `CREATE TABLE IF NOT EXISTS parcel (
+		number INTEGER PRIMARY KEY AUTOINCREMENT,
+		client INTEGER NOT NULL,
+		status TEXT NOT NULL,
+		address TEXT NOT NULL,
+		created_at TEXT NOT NULL
+	);`
+
+	_, err := db.Exec(schema)
+	return err
+}
+
 func (s ParcelService) ChangeAddress(number int, address string) error {
 	return s.store.SetAddress(number, address)
 }
@@ -103,6 +116,12 @@ func main() {
 		return
 	}
 	defer db.Close()
+
+	// Initialize database schema
+	if err := initDB(db); err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	store := NewParcelStore(db)
 	service := NewParcelService(store)
