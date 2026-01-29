@@ -21,12 +21,10 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t friendly-octo-engine .
-        working-directory: ./friendly-octo-engine
 
       - name: Run Docker container
         run: |
           docker run -d --name test_container -p 8080:8080 friendly-octo-engine
-        working-directory: ./friendly-octo-engine
 
       - name: Wait for app to start
         run: sleep 5
@@ -38,11 +36,10 @@ jobs:
       - name: Dockerfile lint
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: ./friendly-octo-engine/Dockerfile
+          dockerfile: friendly-octo-engine/Dockerfile
 
       - name: Cleanup
         if: always()
         run: |
           docker rm -f test_container || true
           docker rmi friendly-octo-engine || true
-        working-directory: ./friendly-octo-engine
